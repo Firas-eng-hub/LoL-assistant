@@ -76,20 +76,29 @@ personal Riot keys are rate-limited and the collector deliberately retries
 HTTP 429 responses instead of dropping matches.
 
 After deployment, `convex/crons.ts` keeps the EUW dataset current automatically.
-Every five minutes it detects the latest Data Dragon `major.minor` patch,
+Every 15 minutes it detects the latest Data Dragon `major.minor` patch,
 resumes at the next Challenger ladder player, collects that player's 10 latest
 Ranked Solo/Duo matches, and re-aggregates only the matchup scopes that changed.
-At roughly 300 Challenger players, this revisits the whole ladder about once per
-day. The cursor resets when the patch changes and wraps after the last ladder
+At roughly 300 Challenger players, this revisits the whole ladder in about three
+days. The cursor resets when the patch changes and wraps after the last ladder
 player. Old-patch records remain patch-isolated and are never used for
-current-patch recommendations.
+current-patch recommendations. Aggregation stores at most the five strongest
+starting and five strongest core candidates per exact matchup scope.
 
 To stay within Convex's free-tier storage budget, a second scheduled job runs
 every 30 minutes. It deletes expired recommendation-cache entries and removes
 processed-match records, participant samples, and stale derived statistics
-older than 21 days. Each table is pruned in batches of at most 500 documents per
+older than 16 days. Each table is pruned in batches of at most 500 documents per
 run so cleanup remains below Convex transaction limits. This is a rolling
 current-patch dataset, not a permanent historical warehouse.
+
+Collection is disabled by default so development and production deployments do
+not both consume the team's storage and Riot quota. Enable it only on the one
+Convex deployment that should own the live EUW dataset:
+
+```powershell
+npx.cmd convex env set DATASET_REFRESH_ENABLED true --prod
+```
 
 Run the same maintenance action manually when verifying a deployment:
 

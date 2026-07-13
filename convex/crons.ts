@@ -5,7 +5,7 @@ const crons = cronJobs();
 
 crons.interval(
   "refresh EUW ranked build samples",
-  { minutes: 5 },
+  { minutes: 15 },
   internal.datasetMaintenance.refreshEuwDataset,
   {},
 );

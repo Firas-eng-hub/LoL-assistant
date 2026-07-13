@@ -9,7 +9,7 @@ import { getCurrentDataDragonPatch } from "./lib/dataDragonItems";
 
 const REFRESH_NAME = "euw1-challenger-continuous";
 const MATCHES_PER_PLAYER = 10;
-const RAW_DATA_RETENTION_MS = 21 * 24 * 60 * 60 * 1000;
+const RAW_DATA_RETENTION_MS = 16 * 24 * 60 * 60 * 1000;
 const DELETE_LIMIT_PER_TABLE = 500;
 
 type RefreshState = {
@@ -153,24 +153,36 @@ export const pruneExpiredData = internalMutation({
 
 export const refreshEuwDataset = internalAction({
   args: {},
-  returns: v.object({
-    patch: v.string(),
-    playerOffset: v.number(),
-    nextPlayerOffset: v.number(),
-    playersCompleted: v.number(),
-    matchesProcessed: v.number(),
-    samplesCreated: v.number(),
-    scopesAggregated: v.number(),
-  }),
-  handler: async (ctx): Promise<{
-    patch: string;
-    playerOffset: number;
-    nextPlayerOffset: number;
-    playersCompleted: number;
-    matchesProcessed: number;
-    samplesCreated: number;
-    scopesAggregated: number;
-  }> => {
+  returns: v.union(
+    v.object({ enabled: v.literal(false) }),
+    v.object({
+      enabled: v.literal(true),
+      patch: v.string(),
+      playerOffset: v.number(),
+      nextPlayerOffset: v.number(),
+      playersCompleted: v.number(),
+      matchesProcessed: v.number(),
+      samplesCreated: v.number(),
+      scopesAggregated: v.number(),
+    }),
+  ),
+  handler: async (ctx): Promise<
+    | { enabled: false }
+    | {
+        enabled: true;
+        patch: string;
+        playerOffset: number;
+        nextPlayerOffset: number;
+        playersCompleted: number;
+        matchesProcessed: number;
+        samplesCreated: number;
+        scopesAggregated: number;
+      }
+  > => {
+    if (process.env.DATASET_REFRESH_ENABLED !== "true") {
+      return { enabled: false };
+    }
+
     const patch = await getCurrentDataDragonPatch();
     const state = await ctx.runQuery(internal.datasetMaintenance.getRefreshState, {
       refreshName: REFRESH_NAME,
@@ -234,6 +246,7 @@ export const refreshEuwDataset = internalAction({
       });
 
       return {
+        enabled: true,
         patch,
         playerOffset: effectiveOffset,
         nextPlayerOffset: result.nextPlayerOffset,

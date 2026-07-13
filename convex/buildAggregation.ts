@@ -36,6 +36,7 @@ type AggregatedBuild = {
 // a candidate can be selected.
 const MINIMUM_CANDIDATE_GAMES = 1;
 const MAX_SAMPLES_PER_AGGREGATION = 5000;
+const MAX_CANDIDATES_PER_BUILD_TYPE = 5;
 
 export const aggregateExactMatchup = internalMutation({
   args: {
@@ -217,7 +218,7 @@ type StoreGroupsInput = {
 async function storeGroups(input: StoreGroupsInput): Promise<number> {
   let stored = 0;
 
-  for (const group of input.groups) {
+  for (const group of input.groups.slice(0, MAX_CANDIDATES_PER_BUILD_TYPE)) {
     if (group.games < MINIMUM_CANDIDATE_GAMES) {
       continue;
     }
