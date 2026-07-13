@@ -277,7 +277,7 @@ export function MatchupForm() {
                       : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500"
                   }`}
                 >
-                  {gold.toLocaleString()} gold
+                  {gold.toLocaleString("en-US")} gold
                 </button>
               );
             })}

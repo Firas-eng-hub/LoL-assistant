@@ -291,15 +291,15 @@ function EvidenceCard({
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <EvidenceMetric
           label="Evidence sample"
-          value={`${evidence.sampleSize.toLocaleString()} games`}
+          value={`${evidence.sampleSize.toLocaleString("en-US")} games`}
         />
         <EvidenceMetric
           label="Starting build"
-          value={`${evidence.startingBuildGames.toLocaleString()} games`}
+          value={`${evidence.startingBuildGames.toLocaleString("en-US")} games`}
         />
         <EvidenceMetric
           label="Core sequence"
-          value={`${evidence.coreBuildGames.toLocaleString()} games`}
+          value={`${evidence.coreBuildGames.toLocaleString("en-US")} games`}
         />
       </div>
     </section>
@@ -340,10 +340,11 @@ function formatPlaystyle(playstyle: Playstyle): string {
 function formatGeneratedTime(timestamp: number): string {
   const generatedDate = new Date(timestamp);
 
-  return `Generated ${generatedDate.toLocaleString(undefined, {
+  return `Generated ${generatedDate.toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
-  })}`;
+    timeZone: "UTC",
+  })} UTC`;
 }
 
 function formatEvidenceLevel(
