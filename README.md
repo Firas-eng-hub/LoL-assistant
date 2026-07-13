@@ -111,7 +111,7 @@ Production Convex is separate from development. Set `RIOT_API_KEY` and
 `CONVEX_DEPLOY_KEY` in Vercel. Use Vercel's build command:
 
 ```text
-npx convex deploy --cmd 'npm run build'
+npx convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'npm run build'
 ```
 
 Use an approved Riot production key for continuous operation. A temporary
