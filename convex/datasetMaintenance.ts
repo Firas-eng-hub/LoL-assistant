@@ -7,8 +7,10 @@ import {
 } from "./_generated/server";
 import { getCurrentDataDragonPatch } from "./lib/dataDragonItems";
 
-const REFRESH_NAME = "euw1-challenger-hourly";
+const REFRESH_NAME = "euw1-challenger-continuous";
 const MATCHES_PER_PLAYER = 10;
+const RAW_DATA_RETENTION_MS = 21 * 24 * 60 * 60 * 1000;
+const DELETE_LIMIT_PER_TABLE = 500;
 
 type RefreshState = {
   patch: string;
@@ -94,6 +96,58 @@ export const saveRefreshState = internalMutation({
     }
 
     return null;
+  },
+});
+
+export const pruneExpiredData = internalMutation({
+  args: {},
+  returns: v.object({
+    processedMatches: v.number(),
+    matchBuildSamples: v.number(),
+    matchupBuildStats: v.number(),
+    buildCache: v.number(),
+  }),
+  handler: async (ctx) => {
+    const now = Date.now();
+    const rawDataCutoff = now - RAW_DATA_RETENTION_MS;
+    const processedMatches = await ctx.db
+      .query("processedMatches")
+      .withIndex("by_processed_at", (query) =>
+        query.lt("processedAt", rawDataCutoff),
+      )
+      .take(DELETE_LIMIT_PER_TABLE);
+    const matchBuildSamples = await ctx.db
+      .query("matchBuildSamples")
+      .withIndex("by_created_at", (query) =>
+        query.lt("createdAt", rawDataCutoff),
+      )
+      .take(DELETE_LIMIT_PER_TABLE);
+    const matchupBuildStats = await ctx.db
+      .query("matchupBuildStats")
+      .withIndex("by_updated_at", (query) =>
+        query.lt("updatedAt", rawDataCutoff),
+      )
+      .take(DELETE_LIMIT_PER_TABLE);
+    const buildCache = await ctx.db
+      .query("buildCache")
+      .withIndex("by_expires_at", (query) => query.lte("expiresAt", now))
+      .take(DELETE_LIMIT_PER_TABLE);
+
+    for (const document of [
+      ...processedMatches,
+      ...matchBuildSamples,
+      ...matchupBuildStats,
+      ...buildCache,
+    ]) {
+      await ctx.db.delete(document._id);
+    }
+
+    return {
+      processedMatches: processedMatches.length,
+      matchBuildSamples: matchBuildSamples.length,
+      matchupBuildStats: matchupBuildStats.length,
+      buildCache: buildCache.length,
+    };
   },
 });
 

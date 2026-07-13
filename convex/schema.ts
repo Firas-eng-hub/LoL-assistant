@@ -26,7 +26,9 @@ export default defineSchema({
     queueId: v.number(),
     gameDurationSeconds: v.number(),
     processedAt: v.number(),
-  }).index("by_match_id", ["matchId"]),
+  })
+    .index("by_match_id", ["matchId"])
+    .index("by_processed_at", ["processedAt"]),
   matchBuildSamples: defineTable({
     matchId: v.string(),
     participantId: v.number(),
@@ -55,7 +57,8 @@ export default defineSchema({
       "championId",
       "lane",
       "tierGroup",
-    ]),
+    ])
+    .index("by_created_at", ["createdAt"]),
   matchupBuildStats: defineTable({
     statsKey: v.string(),
     patch: v.string(),
@@ -113,7 +116,8 @@ export default defineSchema({
       "championId",
       "lane",
       "buildType",
-    ]),
+    ])
+    .index("by_updated_at", ["updatedAt"]),
   collectorState: defineTable({
     collectorName: v.string(),
     platform: v.string(),
